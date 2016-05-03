@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,15 +22,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_main );
         RecyclerView rv = ( RecyclerView ) findViewById( R.id.recyclerView );
-        List<String> numbers = new ArrayList<>( 1000 );
-        for(int i = 0; i < 1000; ++i){
-            numbers.add( String.valueOf(i) );
+        final List<String> numbers = new ArrayList<>( 100 );
+        for(int i = 0; i < 100; ++i){
+            String text = String.valueOf(i);
+//            if(i % 10 == 0){
+//                for(int j = 1, rand = new Random().nextInt(3); j < rand; ++j){
+//                    text += "\n" + String.valueOf(i);
+//                }
+//            }
+            numbers.add( text );
         }
 
-        DummyAdapter adapter = new DummyAdapter( numbers );
+        final DummyAdapter adapter = new DummyAdapter( numbers );
 //*
-        LinearLayoutManager manager = new GridLayoutManager( this, 3, LinearLayoutManager
-                .HORIZONTAL, false );
+        LinearLayoutManager manager = new GridLayoutManager( this, 3 );
         ((GridLayoutManager)manager).setSpanSizeLookup( new StickyHeaderSpanSizeLookup(
                 (GridLayoutManager) manager, adapter ) );
                 /*/
@@ -40,6 +46,13 @@ public class MainActivity extends AppCompatActivity {
         rv.addItemDecoration( new StickyHeaderItemDecoration(manager, 0xffeeeeee,
                 adapter, (ViewGroup) findViewById(R.id.sticky)) );
         rv.setAdapter( adapter );
+        findViewById(R.id.add_item).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                numbers.add(0, String.valueOf(numbers.size()));
+                adapter.notifyItemInserted(0);
+            }
+        });
 
     }
 
@@ -112,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void onBindHeaderViewHolder(HeaderViewHolder holder, final int position) {
-            holder.text.setText( mItems.get( position ) );
+            holder.text.setText( mItems.get(position) );
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
