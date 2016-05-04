@@ -1,4 +1,4 @@
-package info.acidflow.pinnedheadergrid;
+package info.acidflow.stickyheader.widget;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -9,9 +9,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 
-/**
- * Created by paul on 29/04/16.
- */
 public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
 
     private LinearLayoutManager mLayoutManager;
@@ -33,7 +30,8 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
         super.onDrawOver(c, parent, state);
 
         int firstVisiblePos = findFirstVisibleItemPosition();
-        int nextHeaderOffset = getNextHeaderOffset(firstVisiblePos);
+        int nextHeaderOffset = getNextHeaderOffset(parent.getAdapter().getItemCount(),
+                firstVisiblePos);
         boolean isCurrentHeaderPushed = isCurrentHeaderPushed(firstVisiblePos, nextHeaderOffset);
 
         View headerView = getHeaderViewForPosition(parent, firstVisiblePos);
@@ -85,9 +83,10 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
         super.getItemOffsets(outRect, view, parent, state);
     }
 
-    private int getNextHeaderOffset(int firstVisiblePos) {
+    private int getNextHeaderOffset(int adapterSize, int firstVisiblePos) {
         int offset = RecyclerView.NO_POSITION;
-        for (int i = 1, childCount = mLayoutManager.getChildCount(); i <= childCount; ++i) {
+        for (int i = 1, childCount = mLayoutManager.getChildCount();
+             firstVisiblePos + i < adapterSize && i <= childCount; ++i) {
             if (mHeaderProvider.isHeader(firstVisiblePos + i)) {
                 offset = i;
                 break;
@@ -125,8 +124,8 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     private boolean isCurrentHeaderPushed(int firstPos, int offset) {
-        return mLayoutManager.findViewByPosition(firstPos + offset).getTop() <=
-                mStickyViewParent.getHeight();
+        View nextHeader = mLayoutManager.findViewByPosition(firstPos + offset);
+        return nextHeader != null && nextHeader.getTop() <= mStickyViewParent.getHeight();
     }
 
     private float getCurrentHeaderTranslation(View nextHeaderView) {

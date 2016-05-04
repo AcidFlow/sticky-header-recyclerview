@@ -1,4 +1,4 @@
-package info.acidflow.pinnedheadergrid;
+package info.acidflow.stickyheader.widget;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;

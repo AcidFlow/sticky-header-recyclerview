@@ -1,10 +1,7 @@
-package info.acidflow.pinnedheadergrid;
+package info.acidflow.stickyheader.widget;
 
 import android.support.v7.widget.GridLayoutManager;
 
-/**
- * Created by paul on 29/04/16.
- */
 public class StickyHeaderSpanSizeLookup extends GridLayoutManager.SpanSizeLookup {
 
     private GridLayoutManager mLayoutManager;

@@ -13,7 +13,10 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+
+import info.acidflow.stickyheader.widget.IHeaderProvider;
+import info.acidflow.stickyheader.widget.StickyHeaderItemDecoration;
+import info.acidflow.stickyheader.widget.StickyHeaderSpanSizeLookup;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         final DummyAdapter adapter = new DummyAdapter( numbers );
 //*
-        LinearLayoutManager manager = new GridLayoutManager( this, 3 );
+        LinearLayoutManager manager = new GridLayoutManager( this, 8 );
         ((GridLayoutManager)manager).setSpanSizeLookup( new StickyHeaderSpanSizeLookup(
                 (GridLayoutManager) manager, adapter ) );
                 /*/
