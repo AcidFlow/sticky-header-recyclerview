@@ -1,9 +1,7 @@
 package info.acidflow.stickyheader.widget;
 
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.graphics.Region;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -15,10 +13,18 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     private int mBackgroundColor;
     private IHeaderProvider mHeaderProvider;
     private ViewGroup mStickyViewParent;
+    private int mCurrentHeaderPosition;
+    private int mPreviousHeaderPosition = -1;
+    private int mFirstVisiblePos;
+    private int mNextHeaderOffset;
+    private boolean isCurrentHeaderPushed;
+    private View mCurrentHeaderView;
+    private View mFirstVisibleView;
+    private View mNextHeaderView;
 
-    public StickyHeaderItemDecoration(LinearLayoutManager layoutManager, int color,
-                                      IHeaderProvider headerProvider, ViewGroup stickyHolder) {
-        super();
+    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager, int color,
+                                       IHeaderProvider headerProvider, ViewGroup stickyHolder ) {
+        super( );
         mLayoutManager = layoutManager;
         mBackgroundColor = color;
         mHeaderProvider = headerProvider;
@@ -26,68 +32,94 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     @Override
-    public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        super.onDrawOver(c, parent, state);
+    public void onDrawOver( Canvas c, RecyclerView parent, RecyclerView.State state ) {
+        super.onDrawOver( c, parent, state );
 
-        int firstVisiblePos = findFirstVisibleItemPosition();
-        int nextHeaderOffset = getNextHeaderOffset(parent.getAdapter().getItemCount(),
-                firstVisiblePos);
-        boolean isCurrentHeaderPushed = isCurrentHeaderPushed(firstVisiblePos, nextHeaderOffset);
+        mFirstVisiblePos = findFirstVisibleItemPosition( );
+        mNextHeaderOffset = getNextHeaderOffset( parent.getAdapter( ).getItemCount( ),
+                mFirstVisiblePos
+        );
+        isCurrentHeaderPushed = isCurrentHeaderPushed( mFirstVisiblePos, mNextHeaderOffset );
 
-        View headerView = getHeaderViewForPosition(parent, firstVisiblePos);
-        View firstVisibleView = mLayoutManager.findViewByPosition(firstVisiblePos);
-        View nextHeaderView = mLayoutManager.findViewByPosition(firstVisiblePos + nextHeaderOffset);
+        if ( !isHeaderUpdateRequired( ) ) {
+            return;
+        }
 
-        if (isHeader(firstVisiblePos)) {
+        mCurrentHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
+        mFirstVisibleView = mLayoutManager.findViewByPosition( mFirstVisiblePos );
+        mCurrentHeaderView = getHeaderViewForPosition( parent, mFirstVisiblePos );
+        mNextHeaderView = mLayoutManager.findViewByPosition( mFirstVisiblePos + mNextHeaderOffset );
+
+        if ( isHeader( mFirstVisiblePos ) ) {
             // Overriding the first header draw in the adapter to avoid drawing on top of it
-            overrideCanvasBackground(c, headerView, firstVisibleView.getTop());
+            overrideCanvasBackground( c, mCurrentHeaderView, getFirstVisibleViewTranslation( ) );
         }
 
-        if (isCurrentHeaderPushed) {
-            c.save();
-            c.translate(0, getCurrentHeaderTranslation(nextHeaderView));
-            mStickyViewParent.setTranslationY(getCurrentHeaderTranslation(nextHeaderView));
-        } else {
-            mStickyViewParent.setTranslationY(0);
-        }
-
-        mStickyViewParent.removeAllViews();
-        mStickyViewParent.addView(headerView);
-
-        if (isCurrentHeaderPushed) {
-            c.restore();
-        }
-        if (isCurrentHeaderPushed) {
-            headerView = getHeaderViewForPosition(parent, firstVisiblePos + nextHeaderOffset);
+        if ( isCurrentHeaderPushed ) {
+            pushAwayStickyHeader( c );
+            pushAwayStickyView( );
             // Overriding the second header draw in the adapter to avoid drawing on top of it
-            overrideCanvasBackground(c, headerView, getNextHeaderTranslation(nextHeaderView));
-            c.save();
-            c.translate(0, getNextHeaderTranslation(nextHeaderView));
-            headerView.draw(c);
-            c.restore();
+            overrideCanvasBackground( c, mNextHeaderView, getNextHeaderTranslation( ) );
+            drawNextHeader( c );
+        } else {
+            resetStickyHeaderTranslation( );
         }
+
+        if ( shouldUpdateStickyHeaderContent( ) ) {
+            updateStickyHeaderContent( mCurrentHeaderView );
+        }
+        mPreviousHeaderPosition = mCurrentHeaderPosition;
     }
 
-    private void overrideCanvasBackground(Canvas c, View headerView, float translationY) {
-        c.save();
-        c.translate(0, translationY);
-        c.clipRect(0, 0, headerView.getMeasuredWidth(), headerView.getMeasuredHeight(),
-                Region.Op.INTERSECT);
-        c.drawColor(mBackgroundColor);
-        c.restore();
+    private void drawNextHeader( Canvas c ) {
+        c.save( );
+        c.translate( 0, getNextHeaderTranslation( ) );
+        mNextHeaderView.draw( c );
+        c.restore( );
     }
 
-    @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
-                               RecyclerView.State state) {
-        super.getItemOffsets(outRect, view, parent, state);
+    private void updateStickyHeaderContent( View v ) {
+        mStickyViewParent.removeAllViews( );
+        mStickyViewParent.addView( v );
     }
 
-    private int getNextHeaderOffset(int adapterSize, int firstVisiblePos) {
+    private boolean shouldUpdateStickyHeaderContent( ) {
+        return mPreviousHeaderPosition != mCurrentHeaderPosition;
+    }
+
+    private void resetStickyHeaderTranslation( ) {
+        mStickyViewParent.setTranslationY( 0 );
+    }
+
+    private void pushAwayStickyHeader( Canvas c ) {
+        c.save( );
+        c.translate( 0, getCurrentHeaderTranslation( ) );
+        c.restore( );
+    }
+
+    private void pushAwayStickyView( ) {
+        mStickyViewParent.setTranslationY( getCurrentHeaderTranslation( ) );
+    }
+
+    private boolean isHeaderUpdateRequired( ) {
+        return isHeader( mFirstVisiblePos ) || isCurrentHeaderPushed;
+    }
+
+    private void overrideCanvasBackground( Canvas c, View headerView, float translationY ) {
+        c.save( );
+        c.translate( 0, translationY );
+        c.clipRect( 0, 0, headerView.getMeasuredWidth( ), headerView.getMeasuredHeight( ),
+                Region.Op.INTERSECT
+        );
+        c.drawColor( mBackgroundColor );
+        c.restore( );
+    }
+
+    private int getNextHeaderOffset( int adapterSize, int firstVisiblePos ) {
         int offset = RecyclerView.NO_POSITION;
-        for (int i = 1, childCount = mLayoutManager.getChildCount();
-             firstVisiblePos + i < adapterSize && i <= childCount; ++i) {
-            if (mHeaderProvider.isHeader(firstVisiblePos + i)) {
+        for ( int i = 1, childCount = mLayoutManager.getChildCount( );
+              firstVisiblePos + i < adapterSize && i <= childCount; ++i ) {
+            if ( mHeaderProvider.isHeader( firstVisiblePos + i ) ) {
                 offset = i;
                 break;
             }
@@ -95,44 +127,55 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
         return offset;
     }
 
-    private boolean isHeader(int position) {
-        return mHeaderProvider.isHeader(position);
+    private boolean isHeader( int position ) {
+        return mHeaderProvider.isHeader( position );
     }
 
-    private View getHeaderViewForPosition(RecyclerView rv, int position) {
-        RecyclerView.ViewHolder headerHolder = mHeaderProvider.onCreateHeaderViewHolder(rv);
+    private View getHeaderViewForPosition( RecyclerView rv, int position ) {
+        // Create the View corresponding the header
+        RecyclerView.ViewHolder headerHolder = mHeaderProvider.onCreateHeaderViewHolder( rv );
         mHeaderProvider.onBindHeaderViewHolder(
-                headerHolder, mHeaderProvider.getHeaderForPosition(position)
+                headerHolder, mHeaderProvider.getHeaderForPosition( position )
         );
-        View header = headerHolder.itemView;
-        int widthSpec = ViewGroup.MeasureSpec.makeMeasureSpec(rv.getWidth(),
-                View.MeasureSpec.EXACTLY);
-        int heightSpec = View.MeasureSpec.makeMeasureSpec(rv.getHeight(),
-                View.MeasureSpec.UNSPECIFIED);
 
-        int childWidth = ViewGroup.getChildMeasureSpec(widthSpec,
-                rv.getPaddingLeft() + rv.getPaddingRight(), header.getLayoutParams().width);
-        int childHeight = ViewGroup.getChildMeasureSpec(heightSpec,
-                rv.getPaddingTop() + rv.getPaddingBottom(), header.getLayoutParams().height);
-        header.measure(childWidth, childHeight);
-        header.layout(0, 0, header.getMeasuredWidth(), header.getMeasuredHeight());
+        // Measuring it
+        View header = headerHolder.itemView;
+        int widthSpec = ViewGroup.MeasureSpec.makeMeasureSpec( rv.getWidth( ),
+                View.MeasureSpec.EXACTLY
+        );
+        int heightSpec = View.MeasureSpec.makeMeasureSpec( rv.getHeight( ),
+                View.MeasureSpec.UNSPECIFIED
+        );
+
+        int childWidth = ViewGroup.getChildMeasureSpec( widthSpec,
+                rv.getPaddingLeft( ) + rv.getPaddingRight( ), header.getLayoutParams( ).width
+        );
+        int childHeight = ViewGroup.getChildMeasureSpec( heightSpec,
+                rv.getPaddingTop( ) + rv.getPaddingBottom( ), header.getLayoutParams( ).height
+        );
+        header.measure( childWidth, childHeight );
+        header.layout( 0, 0, header.getMeasuredWidth( ), header.getMeasuredHeight( ) );
         return header;
     }
 
-    private int findFirstVisibleItemPosition() {
-        return mLayoutManager.findFirstVisibleItemPosition();
+    private int findFirstVisibleItemPosition( ) {
+        return mLayoutManager.findFirstVisibleItemPosition( );
     }
 
-    private boolean isCurrentHeaderPushed(int firstPos, int offset) {
-        View nextHeader = mLayoutManager.findViewByPosition(firstPos + offset);
-        return nextHeader != null && nextHeader.getTop() <= mStickyViewParent.getHeight();
+    private boolean isCurrentHeaderPushed( int firstPos, int offset ) {
+        View nextHeader = mLayoutManager.findViewByPosition( firstPos + offset );
+        return nextHeader != null && nextHeader.getTop( ) <= mStickyViewParent.getHeight( );
     }
 
-    private float getCurrentHeaderTranslation(View nextHeaderView) {
-        return nextHeaderView.getTop() - mStickyViewParent.getHeight();
+    private float getCurrentHeaderTranslation( ) {
+        return mNextHeaderView.getTop( ) - mStickyViewParent.getHeight( );
     }
 
-    private float getNextHeaderTranslation(View nextHeaderView) {
-        return nextHeaderView.getTop();
+    private float getNextHeaderTranslation( ) {
+        return mNextHeaderView.getTop( );
+    }
+
+    private float getFirstVisibleViewTranslation( ) {
+        return mFirstVisibleView.getTop( );
     }
 }

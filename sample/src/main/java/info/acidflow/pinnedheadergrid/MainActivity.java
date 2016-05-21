@@ -1,5 +1,6 @@
 package info.acidflow.pinnedheadergrid;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
                 this, LinearLayoutManager.VERTICAL, false);
                 //*/
         rv.setLayoutManager( manager );
-        rv.addItemDecoration( new StickyHeaderItemDecoration(manager, 0x00eeeeee,
+        rv.addItemDecoration( new StickyHeaderItemDecoration(manager, Color.WHITE,
                 adapter, (ViewGroup) findViewById(R.id.sticky)) );
         rv.setAdapter( adapter );
         findViewById(R.id.add_item).setOnClickListener(new View.OnClickListener() {
