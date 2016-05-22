@@ -2,30 +2,39 @@ package info.acidflow.stickyheader.widget;
 
 import android.graphics.Canvas;
 import android.graphics.Region;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 
+/**
+ * The sticky header item decoration.
+ * This class is responsible of properly drawing on the RecyclerView canvas if it is necessary and
+ * to add the current header in the sticky ViewGroup
+ */
 public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
 
     private LinearLayoutManager mLayoutManager;
-    private int mBackgroundColor;
     private IHeaderProvider mHeaderProvider;
     private ViewGroup mStickyViewParent;
+    private boolean shouldOverrideBackgroundColor;
+    private int mBackgroundColor;
+
     private int mCurrentHeaderPosition;
     private int mPreviousHeaderPosition = -1;
     private int mFirstVisiblePos;
+    private int mHeaderPosition;
     private int mNextHeaderOffset;
     private boolean isCurrentHeaderPushed;
-    private boolean shouldOverrideBackgroundColor;
+
     private View mCurrentHeaderView;
     private View mFirstVisibleView;
     private View mNextHeaderView;
-    private int mHeaderPosition;
 
     private StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
-                                        IHeaderProvider headerProvider, ViewGroup stickyHolder,
+                                        IHeaderProvider headerProvider,
+                                        ViewGroup stickyHolder,
                                         boolean overrideBackground, int color ) {
         super( );
         mLayoutManager = layoutManager;
@@ -35,14 +44,16 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
         mStickyViewParent = stickyHolder;
     }
 
-    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
-                                       IHeaderProvider headerProvider, ViewGroup stickyHolder,
+    public StickyHeaderItemDecoration( @NonNull LinearLayoutManager layoutManager,
+                                       @NonNull IHeaderProvider headerProvider,
+                                       @NonNull ViewGroup stickyHolder,
                                        int color ) {
         this( layoutManager, headerProvider, stickyHolder, true, color );
     }
 
-    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
-                                       IHeaderProvider headerProvider, ViewGroup stickyHolder ) {
+    public StickyHeaderItemDecoration( @NonNull LinearLayoutManager layoutManager,
+                                       @NonNull IHeaderProvider headerProvider,
+                                       @NonNull ViewGroup stickyHolder ) {
         this( layoutManager, headerProvider, stickyHolder, false, 0 );
     }
 
@@ -50,6 +61,7 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     public void onDrawOver( Canvas c, RecyclerView parent, RecyclerView.State state ) {
         super.onDrawOver( c, parent, state );
 
+        // Initializing required variables to check if we need to update the UI or not
         mFirstVisiblePos = findFirstVisibleItemPosition( );
         mNextHeaderOffset = getNextHeaderOffset( parent.getAdapter( ).getItemCount( ),
                 mFirstVisiblePos
