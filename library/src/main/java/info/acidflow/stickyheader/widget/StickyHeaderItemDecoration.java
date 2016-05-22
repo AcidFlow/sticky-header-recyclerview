@@ -18,17 +18,32 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     private int mFirstVisiblePos;
     private int mNextHeaderOffset;
     private boolean isCurrentHeaderPushed;
+    private boolean shouldOverrideBackgroundColor;
     private View mCurrentHeaderView;
     private View mFirstVisibleView;
     private View mNextHeaderView;
+    private int mHeaderPosition;
 
-    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager, int color,
-                                       IHeaderProvider headerProvider, ViewGroup stickyHolder ) {
+    private StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
+                                        IHeaderProvider headerProvider, ViewGroup stickyHolder,
+                                        boolean overrideBackground, int color ) {
         super( );
         mLayoutManager = layoutManager;
         mBackgroundColor = color;
+        shouldOverrideBackgroundColor = overrideBackground;
         mHeaderProvider = headerProvider;
         mStickyViewParent = stickyHolder;
+    }
+
+    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
+                                       IHeaderProvider headerProvider, ViewGroup stickyHolder,
+                                       int color ) {
+        this( layoutManager, headerProvider, stickyHolder, true, color );
+    }
+
+    public StickyHeaderItemDecoration( LinearLayoutManager layoutManager,
+                                       IHeaderProvider headerProvider, ViewGroup stickyHolder ) {
+        this( layoutManager, headerProvider, stickyHolder, false, 0 );
     }
 
     @Override
@@ -40,6 +55,7 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
                 mFirstVisiblePos
         );
         isCurrentHeaderPushed = isCurrentHeaderPushed( mFirstVisiblePos, mNextHeaderOffset );
+        mHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
 
         if ( !isHeaderUpdateRequired( ) ) {
             return;
@@ -47,10 +63,10 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
 
         mCurrentHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
         mFirstVisibleView = mLayoutManager.findViewByPosition( mFirstVisiblePos );
-        mCurrentHeaderView = getHeaderViewForPosition( parent, mFirstVisiblePos );
+        mCurrentHeaderView = getHeaderViewForPosition( parent, mHeaderPosition );
         mNextHeaderView = mLayoutManager.findViewByPosition( mFirstVisiblePos + mNextHeaderOffset );
 
-        if ( isHeader( mFirstVisiblePos ) ) {
+        if ( shouldOverrideBackgroundColor && isHeader( mFirstVisiblePos ) ) {
             // Overriding the first header draw in the adapter to avoid drawing on top of it
             overrideCanvasBackground( c, mCurrentHeaderView, getFirstVisibleViewTranslation( ) );
         }
@@ -59,7 +75,9 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
             pushAwayStickyHeader( c );
             pushAwayStickyView( );
             // Overriding the second header draw in the adapter to avoid drawing on top of it
-            overrideCanvasBackground( c, mNextHeaderView, getNextHeaderTranslation( ) );
+            if ( shouldOverrideBackgroundColor ) {
+                overrideCanvasBackground( c, mNextHeaderView, getNextHeaderTranslation( ) );
+            }
             drawNextHeader( c );
         } else {
             resetStickyHeaderTranslation( );
@@ -80,7 +98,9 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
 
     private void updateStickyHeaderContent( View v ) {
         mStickyViewParent.removeAllViews( );
-        mStickyViewParent.addView( v );
+        if ( v != null ) {
+            mStickyViewParent.addView( v );
+        }
     }
 
     private boolean shouldUpdateStickyHeaderContent( ) {
@@ -102,7 +122,8 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     private boolean isHeaderUpdateRequired( ) {
-        return isHeader( mFirstVisiblePos ) || isCurrentHeaderPushed;
+        return isHeader( mFirstVisiblePos ) || isCurrentHeaderPushed
+                || mHeaderPosition == RecyclerView.NO_POSITION;
     }
 
     private void overrideCanvasBackground( Canvas c, View headerView, float translationY ) {
@@ -132,6 +153,9 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     private View getHeaderViewForPosition( RecyclerView rv, int position ) {
+        if ( position == RecyclerView.NO_POSITION ) {
+            return null;
+        }
         // Create the View corresponding the header
         RecyclerView.ViewHolder headerHolder = mHeaderProvider.onCreateHeaderViewHolder( rv );
         mHeaderProvider.onBindHeaderViewHolder(

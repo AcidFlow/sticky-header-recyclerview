@@ -1,4 +1,4 @@
-package info.acidflow.pinnedheadergrid;
+package info.acidflow.stickyheaders;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
