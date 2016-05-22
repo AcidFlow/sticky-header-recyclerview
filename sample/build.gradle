@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion configuration.compileSdkVersion
+    buildToolsVersion configuration.buildToolsVersion
 
     defaultConfig {
         applicationId "info.acidflow.pinnedheadergrid"
-        minSdkVersion 16
-        targetSdkVersion 23
+        minSdkVersion configuration.minSdkVersion
+        targetSdkVersion configuration.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName configuration.sampleVersion
     }
     buildTypes {
         release {
@@ -22,6 +22,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':library')
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.3.0'
+    testCompile "junit:junit:${libraries.jUnit}"
+    compile "com.android.support:appcompat-v7:${libraries.supportLibrary}"
 }

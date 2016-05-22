@@ -1,5 +1,4 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     repositories {
         jcenter()
@@ -21,3 +20,23 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// Build configuration
+ext {
+    configuration = [
+            buildToolsVersion   : "23.0.3",
+            compileSdkVersion   : 23,
+            minSdkVersion       : 11,
+            targetSdkVersion    : 23,
+            libraryVersion      : "0.1",
+            sampleVersion       : "1.0",
+    ]
+
+    libraries = [
+            supportLibrary  : "23.3.0",
+            jUnit           : "4.12"
+    ]
+}
+
+def configuration = rootProject.ext.configuration;
+def libraries = rootProject.ext.libraries;
