@@ -1,4 +1,6 @@
-# Sticky-header-recyclerview
+# Sticky-header-recyclerview - [![Build Status](https://travis-ci.org/AcidFlow/sticky-header-recyclerview.svg?branch=master)](https://travis-ci.org/AcidFlow/sticky-header-recyclerview)
+
+
 
 Sticky-header-recyclerview is an Android library that helps you create sticky headers on a RecyclerView. 
 This is compatible with GridLayoutManager and LinearLayoutManager.
