@@ -1,0 +1,55 @@
+apply plugin: 'com.android.library'
+
+android {
+
+    compileSdkVersion configuration.compileSdkVersion
+    buildToolsVersion configuration.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion configuration.minSdkVersion
+        targetSdkVersion configuration.targetSdkVersion
+        versionCode 1
+        versionName configuration.libraryVersion
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile "junit:junit:${libraries.jUnit}"
+    compile "com.android.support:recyclerview-v7:${libraries.supportLibrary}"
+}
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'sticky-header-recyclerview'
+
+    publishedGroupId = 'info.acidflow.android'
+    libraryName = 'Sticky Header Recyclerview'
+    artifact = 'sticky-header-recyclerview'
+
+    libraryDescription = 'Sticky-header-recyclerview is an Android library that helps you create ' +
+            'sticky headers on a RecyclerView.This is compatible with GridLayoutManager and ' +
+            'LinearLayoutManager.'
+
+    siteUrl = 'https://github.com/AcidFlow/sticky-header-recyclerview'
+    gitUrl = 'https://github.com/AcidFlow/sticky-header-recyclerview.git'
+
+    libraryVersion = configuration.libraryVersion
+
+    developerId = 'AcidFlow'
+    developerName = 'Paul Laturaze'
+    developerEmail = 'laturaze.paul@gmail.com'
+
+    licenseName = 'MIT'
+    licenseUrl = 'http://www.opensource.org/licenses/mit-license.php'
+    allLicenses = ["MIT"]
+}
+
+apply from: 'publish-maven.gradle'
+apply from: 'publish-bintray.gradle'
