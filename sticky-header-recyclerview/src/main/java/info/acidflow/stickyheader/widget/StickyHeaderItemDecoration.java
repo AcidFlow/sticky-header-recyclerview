@@ -24,7 +24,6 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     private int mCurrentHeaderPosition;
     private int mPreviousHeaderPosition = -1;
     private int mFirstVisiblePos;
-    private int mHeaderPosition;
     private int mNextHeaderOffset;
     private boolean isCurrentHeaderPushed;
 
@@ -67,15 +66,15 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
                 mFirstVisiblePos
         );
         isCurrentHeaderPushed = isCurrentHeaderPushed( mFirstVisiblePos, mNextHeaderOffset );
-        mHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
+        mCurrentHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
 
         if ( !isHeaderUpdateRequired( ) ) {
+            resetStickyHeaderTranslation();
             return;
         }
 
-        mCurrentHeaderPosition = mHeaderProvider.getHeaderForPosition( mFirstVisiblePos );
         mFirstVisibleView = mLayoutManager.findViewByPosition( mFirstVisiblePos );
-        mCurrentHeaderView = getHeaderViewForPosition( parent, mHeaderPosition );
+        mCurrentHeaderView = getHeaderViewForPosition( parent, mCurrentHeaderPosition );
         mNextHeaderView = mLayoutManager.findViewByPosition( mFirstVisiblePos + mNextHeaderOffset );
 
         if ( shouldOverrideBackgroundColor && isHeader( mFirstVisiblePos ) ) {
@@ -135,7 +134,8 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
 
     private boolean isHeaderUpdateRequired( ) {
         return isHeader( mFirstVisiblePos ) || isCurrentHeaderPushed
-                || mHeaderPosition == RecyclerView.NO_POSITION;
+                || mCurrentHeaderPosition == IHeaderProvider.NO_HEADER
+                || shouldUpdateStickyHeaderContent();
     }
 
     private void overrideCanvasBackground( Canvas c, View headerView, float translationY ) {
@@ -149,7 +149,7 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     private int getNextHeaderOffset( int adapterSize, int firstVisiblePos ) {
-        int offset = RecyclerView.NO_POSITION;
+        int offset = IHeaderProvider.NO_HEADER;
         for ( int i = 1, childCount = mLayoutManager.getChildCount( );
               firstVisiblePos + i < adapterSize && i <= childCount; ++i ) {
             if ( mHeaderProvider.isHeader( firstVisiblePos + i ) ) {
@@ -165,7 +165,7 @@ public class StickyHeaderItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     private View getHeaderViewForPosition( RecyclerView rv, int position ) {
-        if ( position == RecyclerView.NO_POSITION ) {
+        if ( position == IHeaderProvider.NO_HEADER ) {
             return null;
         }
         // Create the View corresponding the header

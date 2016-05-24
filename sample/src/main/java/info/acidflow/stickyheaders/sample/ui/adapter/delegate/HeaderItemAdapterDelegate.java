@@ -58,7 +58,7 @@ public class HeaderItemAdapterDelegate implements
     @Override
     public int getHeaderForPosition( int position ) {
         if ( position < 0 || position >= mItems.size( ) ) {
-            return RecyclerView.NO_POSITION;
+            return IHeaderProvider.NO_HEADER;
         }
 
         if ( mItems.get( position ) instanceof Header ) {
@@ -70,7 +70,7 @@ public class HeaderItemAdapterDelegate implements
                 return i;
             }
         }
-        return RecyclerView.NO_POSITION;
+        return IHeaderProvider.NO_HEADER;
     }
 
     @Override
